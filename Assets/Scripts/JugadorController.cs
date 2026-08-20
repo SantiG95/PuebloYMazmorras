@@ -3,27 +3,54 @@ using UnityEngine;
 public class JugadorController : MonoBehaviour
 {
     public float velocidad = 5;
-    public float inputHorizontal;
-    public float inputVertical;
+    private Vector2 direccion;
+    private Vector2 ultimaDireccion;
 
-    
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    private Rigidbody2D rb;
+    private SpriteRenderer spriteRenderer;
+    private Animator animator;
+
     void Start()
     {
-        
+        rb = GetComponent<Rigidbody2D>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        animator = GetComponent<Animator>();
+
+        ultimaDireccion = Vector2.down;
     }
 
-    // Update is called once per frame
     void Update()
     {
-        inputHorizontal = Input.GetAxisRaw("Horizontal");
-        inputVertical = Input.GetAxisRaw("Vertical");
+        float inputX = Input.GetAxisRaw("Horizontal");
+        float inputY = Input.GetAxisRaw("Vertical");
+        direccion = new Vector2(inputX, inputY).normalized;
 
+        // Si hay movimiento, actualizamos la última dirección
+        if (direccion.magnitude > 0)
+        {
+            ultimaDireccion = direccion;
+        }
 
-        transform.Translate(Vector3.right * inputHorizontal * Time.deltaTime * velocidad);
-        transform.Translate(Vector3.up * inputVertical * Time.deltaTime * velocidad);
+        // 1. Lógica de Espejado (Flip)
+        if (inputX < 0) // Izquierda
+        {
+            spriteRenderer.flipX = true;
+        }
+        else if (inputX > 0) // Derecha
+        {
+            spriteRenderer.flipX = false;
+        }
 
+        // 2. Comunicarnos con el Animator
+        // Usamos Mathf.Abs en X porque la animación "Derecha" sirve para la "Izquierda"
+        animator.SetFloat("Horizontal", Mathf.Abs(ultimaDireccion.x));
+        animator.SetFloat("Vertical", ultimaDireccion.y);
+        animator.SetFloat("Velocidad", direccion.magnitude);
+    }
 
+    void FixedUpdate()
+    {
+        rb.linearVelocity = direccion * velocidad;
     }
 }
